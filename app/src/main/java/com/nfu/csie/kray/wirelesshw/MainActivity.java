@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         clearBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                drawView.clearCircle();
             }
         });
         searchWifiBtn.setOnClickListener(new Button.OnClickListener() {
@@ -122,19 +122,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        drawView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) drawView.getLayoutParams();
-                if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                    int x = Math.round(event.getX() - lp.leftMargin);
-                    int y = Math.round(event.getY() - lp.topMargin);
-                    coordinate.setText("(" + String.valueOf(x) + "," + String.valueOf(y) + ")");
-                    drawView.drawCircle(x, y);
-                }
-                return false;
-            }
-        });
     }
 
     private void startScan(){
@@ -177,7 +164,23 @@ public class MainActivity extends AppCompatActivity {
             target_level_text.setText(String.valueOf(wifiInfo.get(position).second.second));
             dialog.dismiss();
             progressBar.setVisibility(View.VISIBLE);
+            drawView.setOnTouchListener(view_listener);
             new Thread(runnable).start();
+        }
+    };
+
+    View.OnTouchListener view_listener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) drawView.getLayoutParams();
+            if(event.getAction() == MotionEvent.ACTION_DOWN) {
+                int x = Math.round(event.getX() - lp.leftMargin);
+                int y = Math.round(event.getY() - lp.topMargin);
+                int level = wifiInfo.get(currentPosition).second.second;
+                coordinate.setText("(" + String.valueOf(x) + "," + String.valueOf(y) + ")");
+                drawView.drawCircle(x, y, level);
+            }
+            return false;
         }
     };
 

@@ -18,7 +18,9 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -27,6 +29,7 @@ import android.widget.CompoundButton;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,11 +47,12 @@ public class MainActivity extends AppCompatActivity {
 
     private Dialog dialog;
     private WifiManager wifiManager;
+    private TextView coordinate;
     private TextView target_ssid_text;
     private TextView target_mac_text;
     private TextView target_level_text;
     private ProgressBar progressBar;
-    private View drawView;
+    private CanvasView drawView;
     private BroadcastReceiver wifiScanReceiver;
 
     @Override
@@ -83,13 +87,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addListener(){
+        Button clearBtn = findViewById(R.id.clearBtn);
         Button searchWifiBtn = findViewById(R.id.btn1);
+        coordinate = findViewById(R.id.coordinate);
         target_ssid_text = findViewById(R.id.target_ssid);
         target_mac_text = findViewById(R.id.target_mac);
         target_level_text = findViewById(R.id.target_level);
         progressBar = findViewById(R.id.progressBar);
         drawView = findViewById(R.id.DrawView);
         wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+        clearBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
         searchWifiBtn.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -110,6 +122,19 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
+        drawView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) drawView.getLayoutParams();
+                if(event.getAction() == MotionEvent.ACTION_DOWN) {
+                    int x = Math.round(event.getX() - lp.leftMargin);
+                    int y = Math.round(event.getY() - lp.topMargin);
+                    coordinate.setText("(" + String.valueOf(x) + "," + String.valueOf(y) + ")");
+                    drawView.drawCircle(x, y);
+                }
+                return false;
+            }
+        });
     }
 
     private void startScan(){

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Pair;
@@ -19,7 +20,7 @@ public class CanvasView extends View {
     public Paint mPaint;
     public static Canvas mCanvas;
     private ArrayList<WireLessList> wireLessList;
-    private final int radius = 40;
+    private final int size = 40;
 
     public CanvasView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -66,17 +67,23 @@ public class CanvasView extends View {
         textPaint.setColor(Color.WHITE);
         textPaint.setAntiAlias(true);
         @SuppressLint("DrawAllocation") Paint circle = new Paint();
-        circle.setColor(Color.BLUE);
+        circle.setColor(Color.parseColor("#2A9D8F"));
         circle.setStyle(Paint.Style.STROKE);
         circle.setAntiAlias(true);
         for(WireLessList item : wireLessList) {
             Log.i(TAG, "level: " + item.level + ", radius: " + item.radius);
-            canvas.drawCircle(item.x, item.y, radius, mPaint);
+            canvas.drawCircle(item.x, item.y, size, mPaint);
             canvas.drawText(String.valueOf(item.level), item.x, item.y, textPaint);
             canvas.drawCircle(item.x, item.y, (float) item.radius * 10, circle);
         }
         if(wireLessList.size() >= 3){
             Pair<Integer, Integer> router = findRoute();
+            @SuppressLint("DrawAllocation") Paint rect_paint = new Paint();
+            rect_paint.setColor(Color.parseColor("#E9C46A"));
+            rect_paint.setStyle(Paint.Style.FILL_AND_STROKE);
+            rect_paint.setAntiAlias(true);
+            @SuppressLint("DrawAllocation") Rect rect = new Rect(router.first-size/2, router.second-size/2, size/2+router.first, size/2+router.second);
+            canvas.drawRect(rect, rect_paint);
         }
     }
 }

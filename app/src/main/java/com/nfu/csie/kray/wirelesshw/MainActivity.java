@@ -169,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) drawView.getLayoutParams();
-            if(event.getAction() == MotionEvent.ACTION_DOWN) {
+            if(event.getAction() == MotionEvent.ACTION_DOWN && currentPosition != -1 && wifiInfo.size() > 0) {
                 int x = Math.round(event.getX() - lp.leftMargin);
                 int y = Math.round(event.getY() - lp.topMargin);
                 int level = wifiInfo.get(currentPosition).level;

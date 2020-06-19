@@ -49,8 +49,11 @@ public class CanvasView extends View {
 
     public Pair<Integer, Integer> findRoute(){
         int length = (int)(wireLessList.size()/3);
+        ArrayList<Pair<Integer, Integer>> routers = new ArrayList<>();
         for(int i=0; i<length; ++i){
             int a = 3*i, b = 3*i+1, c = 3*i+2;
+            // (r_1^2 (-y_2) + r_1^2 y_3 + r_3^2 (y_2 - y_1) + r_2^2 (y_1 - y_3) - x_2^2 y_1 + x_3^2 y_1 + x_1^2 y_2 - x_3^2 y_2 - x_1^2 y_3 + x_2^2 y_3 - y_1 y_2^2 + y_1 y_3^2 - y_2 y_3^2 + y_1^2 y_2 - y_1^2 y_3 + y_2^2 y_3)/(2 (x_3 (y_1 - y_2) + x_1 (y_2 - y_3) + x_2 (y_3 - y_1)))
+            int x = 0.5 * ()
         }
         return new Pair<>(0, 0);
     }

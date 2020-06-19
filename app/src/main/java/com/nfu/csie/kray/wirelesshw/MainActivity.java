@@ -1,9 +1,9 @@
 package com.nfu.csie.kray.wirelesshw;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.util.Pair;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -13,7 +13,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,22 +23,17 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private ArrayList<Pair<String, Pair<String, Integer>>> wifiInfo;
+    private ArrayList<WifiList> wifiInfo;
     private String currentMACADDR = "";
     private int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 101;
     private int currentPosition = -1;
@@ -131,14 +125,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void firstScanSuccess(){
         unregisterReceiver(wifiScanReceiver);
-        wifiInfo = new ArrayList<Pair<String, Pair<String, Integer>>>();
+        wifiInfo = new ArrayList<>();
         List<ScanResult> results = wifiManager.getScanResults();
-        ArrayList<String> str = new ArrayList<String>();
+        ArrayList<String> str = new ArrayList<>();
         for(ScanResult SR : results) {
             str.add(SR.SSID);
-            wifiInfo.add(new Pair<String, Pair<String, Integer>>(SR.SSID, new Pair<String, Integer>(SR.BSSID, SR.level)));
+            wifiInfo.add(new WifiList(SR.SSID, SR.BSSID, SR.level));
         }
-        ListAdapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, str);
+        ListAdapter adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, str);
         dialog = new Dialog(this);
         dialog.setContentView(R.layout.listalertdialog);
 
@@ -156,12 +150,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     ListView.OnItemClickListener lv_listener = new AdapterView.OnItemClickListener() {
+        @SuppressLint("ClickableViewAccessibility")
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            currentMACADDR = wifiInfo.get(position).second.first;
-            target_ssid_text.setText(wifiInfo.get(position).first);
-            target_mac_text.setText(wifiInfo.get(position).second.first);
-            target_level_text.setText(String.valueOf(wifiInfo.get(position).second.second));
+            currentMACADDR = wifiInfo.get(position).MacAddr;
+            target_ssid_text.setText(wifiInfo.get(position).SSID);
+            target_mac_text.setText(wifiInfo.get(position).MacAddr);
+            target_level_text.setText(String.valueOf(wifiInfo.get(position).level));
             dialog.dismiss();
             progressBar.setVisibility(View.VISIBLE);
             drawView.setOnTouchListener(view_listener);
@@ -170,14 +165,15 @@ public class MainActivity extends AppCompatActivity {
     };
 
     View.OnTouchListener view_listener = new View.OnTouchListener() {
+        @SuppressLint({"SetTextI18n", "ClickableViewAccessibility"})
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) drawView.getLayoutParams();
             if(event.getAction() == MotionEvent.ACTION_DOWN) {
                 int x = Math.round(event.getX() - lp.leftMargin);
                 int y = Math.round(event.getY() - lp.topMargin);
-                int level = wifiInfo.get(currentPosition).second.second;
-                coordinate.setText("(" + String.valueOf(x) + "," + String.valueOf(y) + ")");
+                int level = wifiInfo.get(currentPosition).level;
+                coordinate.setText("(" + x + "," + y + ")");
                 drawView.drawCircle(x, y, level);
             }
             return false;
@@ -191,10 +187,10 @@ public class MainActivity extends AppCompatActivity {
             while (Run){
                 startScan();
                 unregisterReceiver(wifiScanReceiver);
-                wifiInfo = new ArrayList<Pair<String, Pair<String, Integer>>>();
+                wifiInfo = new ArrayList<>();
                 List<ScanResult> results = wifiManager.getScanResults();
                 for(int i=0; i<results.size(); ++i) {
-                    wifiInfo.add(new Pair<String, Pair<String, Integer>>(results.get(i).SSID, new Pair<String, Integer>(results.get(i).BSSID, results.get(i).level)));
+                    wifiInfo.add(new WifiList(results.get(i).SSID, results.get(i).BSSID, results.get(i).level));
                     if (currentMACADDR.equals(results.get(i).BSSID)) {
                         currentPosition = i;
                     }
@@ -203,10 +199,10 @@ public class MainActivity extends AppCompatActivity {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            target_level_text.setText(String.valueOf(wifiInfo.get(currentPosition).second.second));
+                            target_level_text.setText(String.valueOf(wifiInfo.get(currentPosition).level));
                         }
                     });
-                    Log.i("wifi", "Running level: " + wifiInfo.get(currentPosition).second.second);
+//                    Log.i("wifi", "Running level: " + wifiInfo.get(currentPosition).level);
                 }else
                     Log.i("wifi", "Running level: " +  "missing");
                 try {

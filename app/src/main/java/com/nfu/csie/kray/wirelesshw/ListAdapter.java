@@ -19,6 +19,10 @@ public class ListAdapter extends BaseAdapter {
         APlist = list;
     }
 
+    public void update_list(ArrayList<WifiList> list){
+        APlist = list;
+    }
+
     @Override
     public int getCount() {
         return APlist.size();

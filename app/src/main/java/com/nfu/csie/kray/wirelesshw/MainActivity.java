@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,9 +15,12 @@ import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -35,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView AccessPointName;
     private TextView coordinate;
     private ListView listView;
-    private ProgressBar progressBar;
+    private ListAdapter adapter;
     private CanvasView drawView;
     private BroadcastReceiver wifiScanReceiver;
 
@@ -74,10 +78,10 @@ public class MainActivity extends AppCompatActivity {
     private void addListener(){
         Button clearBtn = findViewById(R.id.clearBtn);
         Button changeAPBtn = findViewById(R.id.btn1);
+        Button showDetail = findViewById(R.id.showDetail);
         coordinate = findViewById(R.id.coordinate);
         AccessPointName = findViewById(R.id.AccessPointName);
         listView = findViewById(R.id.listView_);
-        progressBar = findViewById(R.id.progressBar);
         drawView = findViewById(R.id.DrawView);
         wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
         clearBtn.setOnClickListener(new View.OnClickListener() {
@@ -91,6 +95,22 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 drawView.changePosition();
                 AccessPointName.setText(drawView.getSSID());
+            }
+        });
+        showDetail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+                final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1);
+                ArrayList<WireLessList> list = drawView.get_dot_detail();
+                if(list != null && !list.isEmpty())
+                    for(WireLessList item : list){
+                        arrayAdapter.add("("+item.x+","+item.y+")"+item.radius);
+                    }
+                dialog.setTitle("detail")
+                        .setPositiveButton("OK", null)
+                        .setAdapter(arrayAdapter, null)
+                        .show();
             }
         });
         wifiScanReceiver = new BroadcastReceiver() {
@@ -123,13 +143,11 @@ public class MainActivity extends AppCompatActivity {
             str.add(SR.SSID);
             wifiInfo.add(new WifiList(SR.SSID, SR.BSSID, SR.level));
         }
-        drawView.updateList(wifiInfo);
-        ListAdapter adapter = new ListAdapter(this, wifiInfo);
+        adapter = new ListAdapter(this, wifiInfo);
         listView.setAdapter(adapter);
 
         AccessPointName.setText(drawView.getSSID());
         Run = true;
-        progressBar.setVisibility(View.VISIBLE);
         drawView.setOnTouchListener(view_listener);
         new Thread(runnable).start();
     }
@@ -154,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    Handler handler = new Handler();
     Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -165,7 +184,14 @@ public class MainActivity extends AppCompatActivity {
                 for(int i=0; i<results.size(); ++i) {
                     wifiInfo.add(new WifiList(results.get(i).SSID, results.get(i).BSSID, results.get(i).level));
                 }
-                drawView.updateList(wifiInfo);
+//                drawView.updateList(wifiInfo);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.update_list(wifiInfo);
+                        adapter.notifyDataSetChanged();
+                    }
+                });
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {

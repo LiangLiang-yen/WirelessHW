@@ -59,19 +59,6 @@ public class CanvasView extends View {
         invalidate();
     }
 
-    public void updateList(ArrayList<WifiList> APlist){
-        for (WifiList item : APlist) {
-            if(!AP_SSID_MAP.containsKey(item.MacAddr))
-                AP_SSID_MAP.put(item.MacAddr, item.SSID);
-        }
-        if(currentMAC.equals("")){
-            Set ketSet = AP_SSID_MAP.keySet();
-            Iterator it = ketSet.iterator();
-            if (it.hasNext())
-                currentMAC = it.next().toString();
-        }
-    }
-
     public void clearCircle() {
         wireLessList.clear();
         invalidate();
@@ -93,6 +80,10 @@ public class CanvasView extends View {
         invalidate();
     }
 
+    private double pow2(double radius){
+        return Math.pow(radius, 2);
+    }
+
     public String getSSID(){
         if(AP_SSID_MAP.containsKey(currentMAC))
             return AP_SSID_MAP.get(currentMAC);
@@ -100,13 +91,25 @@ public class CanvasView extends View {
             return "";
     }
 
-    public Pair<Integer, Integer> findRoute() {
+    public ArrayList<WireLessList> get_dot_detail(){
+        return wireLessList.get(currentMAC);
+    }
+
+    public Pair<Integer, Integer> findRoute(String mac) {
         int length = (int) (wireLessList.size() / 3);
         ArrayList<Pair<Integer, Integer>> routers = new ArrayList<>();
         for (int i = 0; i < length; ++i) {
             int a = 3 * i, b = 3 * i + 1, c = 3 * i + 2;
-            // (r_1^2 (-y_2) + r_1^2 y_3 + r_3^2 (y_2 - y_1) + r_2^2 (y_1 - y_3) - x_2^2 y_1 + x_3^2 y_1 + x_1^2 y_2 - x_3^2 y_2 - x_1^2 y_3 + x_2^2 y_3 - y_1 y_2^2 + y_1 y_3^2 - y_2 y_3^2 + y_1^2 y_2 - y_1^2 y_3 + y_2^2 y_3)/(2 (x_3 (y_1 - y_2) + x_1 (y_2 - y_3) + x_2 (y_3 - y_1)))
-            //int x = 0.5 * ()
+            WireLessList w1 = wireLessList.get(mac).get(a);
+            WireLessList w2 = wireLessList.get(mac).get(b);
+            WireLessList w3 = wireLessList.get(mac).get(c);
+
+            int x = (int)(((pow2(w2.radius)*(w1.y-w3.y))+(pow2(w3.radius)*(w2.y-w1.y))+(pow2(w1.radius)*(w3.y-w2.y))+
+                    (pow2(w2.x)*(w3.y-w1.y))+(pow2(w3.x)*(w1.y-w2.y))+(pow2(w1.x)*(w2.y-w3.y))+
+                    (pow2(w2.y)*(w3.y-w1.y))+(pow2(w3.y)*(w1.y-w2.y))+(pow2(w1.y)*(w2.y-w3.y)))/
+                    (2*(w3.x*(w1.y-w2.y)+w1.x*(w2.y-w3.y)+w2.x*(w3.y-w1.y))));
+            int y = (int)((((pow2(w2.radius)-pow2(w3.radius)-(2*x-w1.x-w2.x)*(w2.x-w1.x))/(w3.y-w2.y))+w2.y+w3.y)/2);
+            return new Pair<>(x, y);
         }
         return new Pair<>(0, 0);
     }
@@ -136,7 +139,7 @@ public class CanvasView extends View {
             for (WireLessList item : Objects.requireNonNull(wireLessList.get(currentMAC))) {
                 Log.i(TAG, "level: " + item.level + ", radius: " + item.radius);
                 canvas.drawCircle(item.x, item.y, size, mPaint);
-                canvas.drawText(String.valueOf(item.level), item.x, item.y - size, textPaint);
+                canvas.drawText("("+item.x+","+item.y+")"+item.radius, item.x, item.y - size, textPaint);
             }
             if (Objects.requireNonNull(wireLessList.get(currentMAC)).size() >= 2) {
                 @SuppressLint("DrawAllocation") Path path = new Path();
@@ -156,13 +159,14 @@ public class CanvasView extends View {
                 canvas.drawPath(path, mPaint);
             }
             if (Objects.requireNonNull(wireLessList.get(currentMAC)).size() >= 3) {
-                Pair<Integer, Integer> router = findRoute();
+                Pair<Integer, Integer> router = findRoute(currentMAC);
                 @SuppressLint("DrawAllocation") Paint rect_paint = new Paint();
-                rect_paint.setColor(Color.parseColor("#E9C46A"));
+                rect_paint.setColor(Color.parseColor("#00FF00"));
                 rect_paint.setStyle(Paint.Style.FILL_AND_STROKE);
                 rect_paint.setAntiAlias(true);
                 @SuppressLint("DrawAllocation") Rect rect = new Rect(router.first - size / 2, router.second - size / 2, size / 2 + router.first, size / 2 + router.second);
                 canvas.drawRect(rect, rect_paint);
+                canvas.drawText("("+router.first+","+router.second+")", router.first - size / 2, router.second - size / 2, textPaint);
             }
         }
     }
